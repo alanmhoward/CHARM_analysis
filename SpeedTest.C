@@ -1,4 +1,6 @@
 // Test sorting speed using different approaches 
+// To use in a bash loop (and print time in seconds for each file) do
+// for i in run???.root; do t1=$SECONDS; root -b -q -l '../code/SpeedTest.C("'${i}'")'; t2=$SECONDS; echo $(($t2-$t1)); done
 
 void SpeedTest(TString filename){
 
