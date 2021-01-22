@@ -71,12 +71,16 @@ void SpeedTest(TString filename){
   hToTS2->Fit(f,"","");
   double ToTS2_max = f->GetParameter(1);
   double ToTS2_width = f->GetParameter(2);
+  f->SetParameters(hToTB->GetMaximum(), hToTB->GetMaximumBin(), 10.);
+  hToTB->Fit(f,"","");
+  double ToTB_max = f->GetParameter(1);
+  double ToTB_width = f->GetParameter(2);  
   
   // ------------------------------------------------- //
   
   // -------- Waiting time --------- //
   // Histogram for storing the waiting time between events 
-  TH1D *timediff = new TH1D("timediff","timediff",1000,0,1e6);
+  TH1D *timediff = new TH1D("timediff","timediff",100000,0,1e6);
 
   // Set time variable for use in loop 
   ULong64_t time;
@@ -112,6 +116,7 @@ void SpeedTest(TString filename){
   cout << ToT_max << "\t" << ToT_width << endl;
   cout << ToTS1_max << "\t" << ToTS1_width << endl; 
   cout << ToTS2_max << "\t" << ToTS2_width << endl; 
+  cout << ToTB_max << "\t" << ToTB_width << endl; 
   
 
   timediff->Write();
