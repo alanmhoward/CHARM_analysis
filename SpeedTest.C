@@ -80,12 +80,27 @@ void SpeedTest(TString filename){
   
   // -------- Waiting time --------- //
   // Histogram for storing the waiting time between events 
-  TH1D *timediff = new TH1D("timediff","timediff",100000,0,1e6);
+  TH1D *timediff = new TH1D("timediff","timediff",1000000,0,1e6);
 
   // Set time variable for use in loop 
   ULong64_t time;
   rawdata->SetBranchAddress("time", &time);
   
+  // Set variables for diagnosing events with small waiting times
+  UShort_t xpos, ypos, amp;
+  rawdata->SetBranchAddress("xpos", &xpos);
+  rawdata->SetBranchAddress("ypos", &ypos);
+  rawdata->SetBranchAddress("amp", &amp);
+  UChar_t mcpdID;
+  rawdata->SetBranchAddress("mcpdID", &mcpdID);
+
+  // x and y position of events with short waiting times
+  TH1I *hxdt = new TH1I("hxdt","hxdt",512,0,256); 
+  TH1I *hydt = new TH1I("hydt","hydt",256,0,128);
+  TH2I *hxydt = new TH2I("hxydt","hxydt",256,0,256,128,0,128);
+  TH1I *hampdt = new TH1I("hampdt","hampdt",256,0,256);
+  TH1I *hdxdt = new TH1I("hdxdt","hdxdt",512,0,256);
+
   // Build an index of the TTree using event time
   // Use this to loop through events in chronological order
   rawdata->BuildIndex("time");
@@ -105,6 +120,16 @@ void SpeedTest(TString filename){
     dt = tf-ti;
     timediff->Fill(dt);
     ti=tf;
+    if (dt<2){
+      int segID = 1;
+      if (mcpdID==0x02) segID = 2;
+      double xdt = (xpos + 1024 * (segID-1))/8.;
+      double ydt = ypos / 8.;
+      hxdt->Fill(xdt);
+      hydt->Fill(ydt);
+      hxydt->Fill(xdt,ydt);
+      hampdt->Fill(amp);
+    }
   }
   // ---------------------------------//
 
@@ -126,6 +151,12 @@ void SpeedTest(TString filename){
   hToTS1->Write();
   hToTS2->Write();
   hToTB->Write();
+
+  hxdt->Write();
+  hydt->Write();
+  hxydt->Write();
+  hampdt->Write();
+
   outfile->Close();
   
   //delete outfile;
