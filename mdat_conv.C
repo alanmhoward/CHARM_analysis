@@ -186,7 +186,8 @@ void mdat_conv(TString filename, int debug=0){
   rawdata->Branch("param1", &header.param1, "param1/l");
   rawdata->Branch("param2", &header.param2, "param2/l");
   rawdata->Branch("param3", &header.param3, "param3/l");  
-  
+  rawdata->Branch("headerTS", &header.headerTS, "headerTS/l");
+  rawdata->Branch("buffernumber", &header.buffernumber, "buffernumber/s"); 
 
 
   //--- Open the input mdat file ---//
