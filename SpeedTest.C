@@ -35,7 +35,7 @@ void SpeedTest(TString filename){
   ULong64_t t_min = rawdata->GetMinimum("time");
   ULong64_t t_max = rawdata->GetMaximum("time");
   ULong64_t t_tot = t_max-t_min; // in units of 100ns
-  double t_secs = t_tot/100.e-9;
+  double t_secs = t_tot*100.e-9;
   // -----------------------------------//
   
   // ----------- Position spectra ------ //
@@ -43,6 +43,25 @@ void SpeedTest(TString filename){
   TH1I *hy = new TH1I("hy","hy",256,0,128);
   rawdata->Draw("x>>hx(512,0,256)","","goff");
   rawdata->Draw("y>>hy(256,0,128)","","goff");
+
+  // Use the chi squared of a pol0 fit to quantify the fine structure in the position spectra
+  TF1 *fx = new TF1("fx","[0]");
+  // Boundary region
+  hx->Fit(fx,"","Q",117.5,137.5);
+  double xposB_mean = fx->GetParameter(0);
+  double xposB_chi = fx->GetChisquare();
+  double xposB_NDF = fx->GetNDF();
+  // Seg1
+  hx->Fit(fx,"","Q",97.5,117.5);
+  double xposS1_mean = fx->GetParameter(0);
+  double xposS1_chi = fx->GetChisquare();
+  double xposS1_NDF = fx->GetNDF();
+  // Seg2
+  hx->Fit(fx,"","Q",137.5,157.5);
+  double xposS2_mean = fx->GetParameter(0);
+  double xposS2_chi = fx->GetChisquare();
+  double xposS2_NDF = fx->GetNDF();
+
   // ----------------------------------- //
   
   // ---------------- ToT spectra -------------------- //
@@ -60,19 +79,19 @@ void SpeedTest(TString filename){
   TF1 *f = new TF1("sgf","[0]*exp(-pow((x-[1])/([2]+ ( (x<[1])*[3] + (x>[1])*[4] ) *(x-[1])),2))");
   // Set initial parameters
   f->SetParameters(hToT->GetMaximum(), hToT->GetMaximumBin(), 10.);
-  hToT->Fit(f,"","");
+  hToT->Fit(f,"","Q");
   double ToT_max = f->GetParameter(1);
   double ToT_width = f->GetParameter(2);
   f->SetParameters(hToTS1->GetMaximum(), hToTS1->GetMaximumBin(), 10.);
-  hToTS1->Fit(f,"","");
+  hToTS1->Fit(f,"","Q");
   double ToTS1_max = f->GetParameter(1);
   double ToTS1_width = f->GetParameter(2);
   f->SetParameters(hToTS2->GetMaximum(), hToTS2->GetMaximumBin(), 10.);
-  hToTS2->Fit(f,"","");
+  hToTS2->Fit(f,"","Q");
   double ToTS2_max = f->GetParameter(1);
   double ToTS2_width = f->GetParameter(2);
   f->SetParameters(hToTB->GetMaximum(), hToTB->GetMaximumBin(), 10.);
-  hToTB->Fit(f,"","");
+  hToTB->Fit(f,"","Q");
   double ToTB_max = f->GetParameter(1);
   double ToTB_width = f->GetParameter(2);  
   
@@ -120,6 +139,8 @@ void SpeedTest(TString filename){
     dt = tf-ti;
     timediff->Fill(dt);
     ti=tf;
+    // Select events based on time since previous event
+    /* 
     if (dt<2){
       int segID = 1;
       if (mcpdID==0x02) segID = 2;
@@ -130,14 +151,42 @@ void SpeedTest(TString filename){
       hxydt->Fill(xdt,ydt);
       hampdt->Fill(amp);
     }
+   */ 
   }
+
   // ---------------------------------//
 
+
+  // ------------- Check time ordering of events ---------------- //
+  // Track the last recorded time in each segment separately
+  ULong64_t tS1 = 0;
+  ULong64_t tS2 = 0;
+      
+  // Loop over all events and print a message whenever the time regresses
+  
+  for (int i = 1; i < entries; i++){
+    rawdata->GetEntry(i);
+    if(mcpdID==0x01){
+      if (time < tS1) cout << "entry " << i << " " << tS1 << " " << time << endl;
+      tS1 = time;
+    }
+    else{
+      if (time < tS2) cout << "entry " << i << " " << tS2 << " " << time << endl;
+      tS2 = time;
+    }
+  }
+   
+ 
+  // ------------------------------------------------------------ //
 
   // Output results
   // entries, entriesS1, entriesS2, entriesB
   // timediff
-  cout << entries << "\t" << entriesS1 << "\t" << entriesS2 << "\t" << entriesB << endl;
+
+  cout << t_secs << "\t" << entries << "\t" << entriesS1 << "\t" << entriesS2 << "\t" << entriesB << endl;
+  cout << xposS1_mean << "\t" << xposS1_chi << "\t" << xposS1_NDF << endl;
+  cout << xposS2_mean << "\t" << xposS2_chi << "\t" << xposS2_NDF << endl;
+  cout << xposB_mean << "\t" << xposB_chi << "\t" << xposB_NDF << endl;
   cout << ToT_max << "\t" << ToT_width << endl;
   cout << ToTS1_max << "\t" << ToTS1_width << endl; 
   cout << ToTS2_max << "\t" << ToTS2_width << endl; 
