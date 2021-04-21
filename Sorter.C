@@ -91,7 +91,7 @@ void AddEntry(Entry entry, int row, TTree *data){
   }  
   
   // Fill if wire
-  if(entry.xpos<150){
+  if(entry.ypos==0){
     evtbuff[seg].ToTx += entry.amp;
     evtbuff[seg].xToTx += (entry.xpos * entry.amp);
     evtbuff[seg].multx ++;
@@ -99,10 +99,10 @@ void AddEntry(Entry entry, int row, TTree *data){
     if(entry.xpos<evtbuff[seg].minx) evtbuff[seg].minx = entry.xpos;
     
   }
-  // Fill if stripe
+  // Fill if stripe (and remove 512 channel offset)
   else{
     evtbuff[seg].ToTy += entry.amp;
-    evtbuff[seg].yToTy += (entry.ypos * entry.amp);
+    evtbuff[seg].yToTy += ((entry.ypos - 512) * entry.amp);
     evtbuff[seg].multy ++;
     if(entry.ypos>evtbuff[seg].maxy) evtbuff[seg].maxy = entry.ypos;
     if(entry.ypos<evtbuff[seg].miny) evtbuff[seg].miny = entry.ypos;
