@@ -48,8 +48,8 @@ struct Event{
 const int time_window = 30;
 const Event emptyevent;
 
-// Event buffer for both segments
-Event evtbuff[2];
+// Event buffer up to nine segments
+Event evtbuff[9];
 
 
 // ------------------------- //
@@ -214,14 +214,13 @@ void Sorter(TString filename){
   // ------------------------------------- //
   // ------- Read out final events ------- //
   // ------------------------------------- //
-  
-  CalculateEvent(0);
-  event = evtbuff[0];
-  data->Fill();
-  CalculateEvent(1);
-  event = evtbuff[1];
-  data->Fill();
-  
+ 
+
+  for (int i=0; i<9; i++){
+    CalculateEvent(i);
+    event = evtbuff[i];
+    data->Fill();
+  }
   
   // ----------------------- //
   // ------- Tidy up ------- //
